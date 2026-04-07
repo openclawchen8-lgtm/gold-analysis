@@ -7,7 +7,7 @@ from typing import Optional
 from sqlalchemy import String, Boolean, DateTime, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from .config import Base
+from app.db.config import Base
 
 
 class User(Base):

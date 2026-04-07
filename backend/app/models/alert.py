@@ -8,7 +8,7 @@ from sqlalchemy import String, Float, Boolean, DateTime, ForeignKey, Enum as SQL
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from enum import Enum
 
-from .config import Base
+from app.db.config import Base
 
 
 class AlertType(str, Enum):
@@ -30,7 +30,7 @@ class Alert(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     triggered_at: Mapped[Optional[datetime]] = mapped_column(DateTime)
-    metadata: Mapped[Optional[str]] = mapped_column(String(500))
+    extra_data: Mapped[Optional[str]] = mapped_column(String(500))
 
     # Relationship
     user: Mapped["User"] = relationship(back_populates="alerts")

@@ -15,6 +15,9 @@ from redis import asyncio as aioredis
 class Settings(BaseSettings):
     """Database configuration settings"""
     
+    # Debug mode
+    debug: bool = False
+    
     # PostgreSQL
     database_url: str = "postgresql+asyncpg://user:password@localhost:5432/gold_analysis"
     

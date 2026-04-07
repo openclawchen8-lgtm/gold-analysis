@@ -8,7 +8,7 @@ from enum import Enum
 from sqlalchemy import String, Boolean, DateTime, Text, Integer, Float, ForeignKey, Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from .config import Base
+from app.db.config import Base
 
 
 class DecisionType(str, Enum):
@@ -69,7 +69,7 @@ class Decision(Base):
     
     # Metadata
     model_version: Mapped[str] = mapped_column(String(50), default="v1")
-    metadata: Mapped[Optional[str]] = mapped_column(Text)  # Additional JSON metadata
+    extra_data: Mapped[Optional[str]] = mapped_column(Text)  # Additional JSON metadata
     
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
