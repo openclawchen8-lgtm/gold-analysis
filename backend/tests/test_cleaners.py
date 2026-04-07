@@ -27,19 +27,21 @@ class TestPriceCleaner:
         ]
 
     def test_remove_duplicates(self):
-        cleaned, stats = self.cleaner.remove_duplicates(self.sample, key_field="timestamp")
+        cleaned = self.cleaner.remove_duplicates(self.sample, key_field="timestamp")
+        stats = self.cleaner.get_stats()
         # Should keep first occurrence by default
         assert len(cleaned) == 4
-        assert stats["duplicate_count"] == 1
+        assert stats["duplicates_removed"] == 1
         # Verify that timestamps are unique
         timestamps = [item["timestamp"] for item in cleaned]
         assert len(set(timestamps)) == len(timestamps)
 
     def test_clean_missing_values_interpolate(self):
         # Ensure strategy is interpolate (default)
-        cleaned, stats = self.cleaner.clean_missing_values(self.sample, value_field="price")
+        cleaned = self.cleaner.clean_missing_values(self.sample, value_field="price")
+        stats = self.cleaner.get_stats()
         # Missing count should be 1
-        assert stats["missing_count"] == 1
+        assert stats["missing_fixed"] == 1
         # After interpolation, missing should be filled (not None)
         missing_filled = [item for item in cleaned if item.get("price") is None]
         assert len(missing_filled) == 0

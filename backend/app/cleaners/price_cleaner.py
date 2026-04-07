@@ -17,12 +17,14 @@ class PriceCleaner:
     
     def __init__(self):
         self.settings = get_cleaning_settings()
+        self._last_stats: Dict[str, Any] = {}
     
     def clean_missing_values(
         self, 
         data: List[Dict[str, Any]],
-        value_field: str = "price"
-    ) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
+        value_field: str = "price",
+        method: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
         """
         處理缺失值
         
@@ -34,44 +36,37 @@ class PriceCleaner:
         Args:
             data: 數據列表
             value_field: 價格字段名
+            method: 清洗策略（優先於配置）
             
         Returns:
-            (清洗後的數據, 統計信息)
+            清洗後的數據列表
         """
         if not data:
-            return [], {"missing_count": 0, "strategy": self.settings.missing_value_strategy}
+            self._last_stats["missing_fixed"] = 0
+            return []
         
         # 統計缺失值
         missing_count = sum(1 for item in data if item.get(value_field) is None)
         
         if missing_count == 0:
-            return data, {"missing_count": 0, "strategy": self.settings.missing_value_strategy}
+            self._last_stats["missing_fixed"] = 0
+            return data
         
-        logger.info(f"Found {missing_count} missing values, strategy: {self.settings.missing_value_strategy}")
-        
-        strategy = self.settings.missing_value_strategy
+        strategy = method or self.settings.missing_value_strategy
+        logger.info(f"Found {missing_count} missing values, strategy: {strategy}")
         
         if strategy == "delete":
-            # 刪除包含缺失值的記錄
             cleaned = [item for item in data if item.get(value_field) is not None]
-        
         elif strategy == "mark":
-            # 保持原樣，只標記
             cleaned = data
-        
         elif strategy == "interpolate":
-            # 線性插值
             cleaned = self._interpolate_missing(data, value_field)
-        
         else:
             logger.warning(f"Unknown strategy: {strategy}, using mark")
             cleaned = data
         
-        return cleaned, {
-            "missing_count": missing_count,
-            "strategy": strategy,
-            "remaining": sum(1 for item in cleaned if item.get(value_field) is None)
-        }
+        self._last_stats["missing_fixed"] = missing_count
+        return cleaned
     
     def _interpolate_missing(
         self,
@@ -141,7 +136,7 @@ class PriceCleaner:
         self,
         data: List[Dict[str, Any]],
         key_field: str = "timestamp"
-    ) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
+    ) -> List[Dict[str, Any]]:
         """
         移除重複數據
         
@@ -150,10 +145,11 @@ class PriceCleaner:
             key_field: 用於判斷重複的字段
             
         Returns:
-            (清洗後的數據, 統計信息)
+            清洗後的數據列表
         """
         if not data:
-            return [], {"duplicate_count": 0, "keep": self.settings.duplicate_keep}
+            self._last_stats["duplicates_removed"] = 0
+            return []
         
         seen = set()
         unique_data = []
@@ -162,11 +158,9 @@ class PriceCleaner:
         for item in data:
             key = item.get(key_field)
             if key is None:
-                # 如果 key 為 None，保留（可能是缺失值）
                 unique_data.append(item)
                 continue
             
-            # 轉換為字符串以便於比較
             key_str = str(key)
             
             if key_str in seen:
@@ -180,10 +174,7 @@ class PriceCleaner:
         if duplicate_count > 0:
             logger.info(f"Removed {duplicate_count} duplicate records")
         
-        # 如果策略是保留最後一條，需要反轉
         if self.settings.duplicate_keep == "last" and duplicate_count > 0:
-            unique_data = list(reversed(unique_data))
-            # 再次去重，保留最後出現的
             seen = set()
             final_data = []
             for item in reversed(unique_data):
@@ -193,12 +184,8 @@ class PriceCleaner:
                     final_data.append(item)
             unique_data = list(reversed(final_data))
         
-        return unique_data, {
-            "duplicate_count": duplicate_count,
-            "keep": self.settings.duplicate_keep,
-            "total_original": len(data),
-            "total_cleaned": len(unique_data)
-        }
+        self._last_stats["duplicates_removed"] = duplicate_count
+        return unique_data
     
     def fix_anomalies(
         self,
@@ -299,24 +286,37 @@ class PriceCleaner:
         Returns:
             (清洗後的數據, 完整統計)
         """
-        stats = {}
+        stats: Dict[str, Any] = {}
+        original_count = len(data)
         
         # Step 1: 移除重複
-        data, dup_stats = self.remove_duplicates(data, key_field)
-        stats["duplicates"] = dup_stats
+        data = self.remove_duplicates(data, key_field)
+        dup_count = self._last_stats.get("duplicates_removed", 0)
+        stats["duplicates"] = {"duplicate_count": dup_count}
         
         # Step 2: 處理缺失值
-        data, missing_stats = self.clean_missing_values(data, value_field)
-        stats["missing"] = missing_stats
+        data = self.clean_missing_values(data, value_field)
+        missing_count = self._last_stats.get("missing_fixed", 0)
+        stats["missing"] = {"missing_count": missing_count}
         
         # Step 3: 修正異常值
         data, anomaly_stats = self.fix_anomalies(data, value_field)
         stats["anomalies"] = anomaly_stats
         
-        stats["total_original"] = len(data)
+        stats["total_original"] = original_count
         stats["total_cleaned"] = len(data)
-        
+
+        self._last_stats = {
+            "missing_fixed": missing_count,
+            "duplicates_removed": dup_count,
+            "outliers_detected": anomaly_stats.get("anomaly_count", 0),
+        }
+
         return data, stats
+
+    def get_stats(self) -> Dict[str, Any]:
+        """取得最近一次操作的統計信息"""
+        return self._last_stats.copy()
 
 
 # 預設實例

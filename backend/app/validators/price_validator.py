@@ -1,6 +1,6 @@
 # backend/app/validators/price_validator.py
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 
@@ -20,7 +20,9 @@ class PriceValidator:
         """驗證時間戳"""
         if ts is None:
             return False
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
+        if ts.tzinfo is None:
+            ts = ts.replace(tzinfo=timezone.utc)
         if ts > now:
             return False  # 未來時間
         if (now - ts).days > 365:

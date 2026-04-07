@@ -16,6 +16,7 @@ class OutlierDetector:
     
     def __init__(self):
         self.settings = get_cleaning_settings()
+        self._last_stats: Dict[str, Any] = {}
     
     def detect_zscore(
         self,
@@ -108,8 +109,10 @@ class OutlierDetector:
     def detect_iqr(
         self,
         data: List[Dict[str, Any]],
-        value_field: str = "price",
-        multiplier: Optional[float] = None
+        value_field: Optional[str] = None,
+        multiplier: Optional[float] = None,
+        field: Optional[str] = None,
+        return_indices: bool = False,
     ) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
         """
         使用 IQR (四分位距) 方法檢測異常值
@@ -127,50 +130,56 @@ class OutlierDetector:
         """
         if multiplier is None:
             multiplier = self.settings.iqr_multiplier
-        
+
+        # 支援 field 參數別名
+        _field = field if field is not None else (value_field or "price")
+
         # 提取有效值
-        valid_data = [item for item in data if item.get(value_field) is not None]
-        
+        valid_data = [item for item in data if item.get(_field) is not None]
+
         if len(valid_data) < 4:
             return data, {"outlier_count": 0, "method": "iqr", "reason": "insufficient data"}
-        
-        values = np.array([item[value_field] for item in valid_data])
-        
+
+        values = np.array([item[_field] for item in valid_data])
+
         # 計算 Q1, Q3, IQR
         q1 = np.percentile(values, 25)
         q3 = np.percentile(values, 75)
         iqr = q3 - q1
-        
+
         lower_bound = q1 - multiplier * iqr
         upper_bound = q3 + multiplier * iqr
-        
-        # 標記異常值
+
+        # 標記異常值 / 收集索引
         outlier_count = 0
+        outlier_indices: List[int] = []
         result = []
-        
-        for item in data.copy():
-            value = item.get(value_field)
-            
+
+        for i, item in enumerate(data):
+            value = item.get(_field)
+
             if value is None:
                 result.append(item)
                 continue
-            
+
             is_outlier = value < lower_bound or value > upper_bound
-            
+
             if is_outlier:
                 outlier_count += 1
-                new_item = item.copy()
-                new_item["_is_outlier"] = True
-                new_item["_outlier_iqr"] = round(value - q1, 4) if value < q1 else round(value - q3, 4)
-                new_item["_outlier_method"] = "iqr"
-                result.append(new_item)
+                outlier_indices.append(i)
+                if not return_indices:
+                    new_item = item.copy()
+                    new_item["_is_outlier"] = True
+                    new_item["_outlier_iqr"] = round(value - q1, 4) if value < q1 else round(value - q3, 4)
+                    new_item["_outlier_method"] = "iqr"
+                    result.append(new_item)
                 logger.debug(f"IQR outlier detected: value={value}, bounds=[{lower_bound:.2f}, {upper_bound:.2f}]")
             else:
                 result.append(item)
         
         logger.info(f"IQR detection found {outlier_count} outliers (multiplier={multiplier})")
-        
-        return result, {
+
+        stats = {
             "outlier_count": outlier_count,
             "method": "iqr",
             "multiplier": multiplier,
@@ -182,6 +191,13 @@ class OutlierDetector:
                 "upper": round(upper_bound, 4)
             }
         }
+
+        if return_indices:
+            self._last_stats = stats
+            return outlier_indices, stats
+
+        self._last_stats = stats
+        return result, stats
     
     def detect_combined(
         self,
@@ -264,6 +280,30 @@ class OutlierDetector:
             raise ValueError(f"Unknown method: {method}")
         
         return [item for item in result if item.get("_is_outlier", False)]
+
+    def remove_outliers(
+        self,
+        data: List[Dict[str, Any]],
+        outlier_indices: List[int]
+    ) -> List[Dict[str, Any]]:
+        """
+        移除指定的異常值記錄
+        
+        Args:
+            data: 數據列表
+            outlier_indices: 需要移除的記錄索引列表
+            
+        Returns:
+            移除異常值後的數據列表
+        """
+        outlier_set = set(outlier_indices)
+        result = [item for i, item in enumerate(data) if i not in outlier_set]
+        self._last_stats["removed_count"] = len(outlier_set)
+        return result
+
+    def get_stats(self) -> Dict[str, Any]:
+        """取得最近一次操作的統計信息"""
+        return self._last_stats.copy()
 
 
 # 預設實例

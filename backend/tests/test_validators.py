@@ -1,7 +1,7 @@
 # backend/tests/test_validators.py
 
 import pytest
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from app.validators import PriceValidator, MarketValidator
 
@@ -19,12 +19,12 @@ class TestPriceValidator:
 
     def test_validate_timestamp_valid(self):
         validator = PriceValidator()
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         assert validator.validate_timestamp(now) is True
 
     def test_validate_timestamp_future(self):
         validator = PriceValidator()
-        future = datetime.now() + timedelta(days=1)
+        future = datetime.now(timezone.utc) + timedelta(days=1)
         assert validator.validate_timestamp(future) is False
 
 

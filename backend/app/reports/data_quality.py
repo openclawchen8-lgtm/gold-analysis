@@ -4,18 +4,112 @@ Data Quality Report - 數據品質報告生成器
 """
 
 import logging
+import json
 from typing import List, Dict, Any, Optional
+from dataclasses import dataclass, asdict
 from datetime import datetime
 import numpy as np
 
 logger = logging.getLogger(__name__)
 
 
+@dataclass
+class QualityMetrics:
+    """數據品質指標"""
+    total_records: int
+    valid_records: int
+    invalid_records: int
+    missing_count: int
+    outlier_count: int
+    duplicate_count: int
+    quality_score: float
+    grade: str
+
+
 class DataQualityReport:
     """數據品質報告生成器"""
     
     def __init__(self):
-        pass
+        self.timestamp: Optional[str] = None
+        self.metrics: Optional[QualityMetrics] = None
+    
+    def generate(
+        self,
+        original_data: List[Dict],
+        cleaned_data: List[Dict],
+        validation_stats: Dict[str, Any],
+        cleaning_stats: Dict[str, Any]
+    ) -> QualityMetrics:
+        """生成品質報告"""
+        self.timestamp = datetime.now().isoformat()
+        
+        total = len(original_data)
+        valid = validation_stats.get('valid_count', 0)
+        missing = cleaning_stats.get('missing_fixed', 0)
+        duplicates = cleaning_stats.get('duplicates_removed', 0)
+        outliers = cleaning_stats.get('outliers_detected', 0)
+        
+        quality_score = self._calculate_score(total, valid, missing, duplicates, outliers)
+        grade = self._get_grade(quality_score)
+        
+        self.metrics = QualityMetrics(
+            total_records=total,
+            valid_records=valid,
+            invalid_records=total - valid,
+            missing_count=missing,
+            outlier_count=outliers,
+            duplicate_count=duplicates,
+            quality_score=quality_score,
+            grade=grade
+        )
+        
+        return self.metrics
+    
+    def _calculate_score(
+        self,
+        total: int,
+        valid: int,
+        missing: int,
+        duplicates: int,
+        outliers: int
+    ) -> float:
+        """計算品質分數"""
+        if total == 0:
+            return 0.0
+        
+        # 有效性權重 40%
+        validity_score = (valid / total) * 40 if total > 0 else 0
+        
+        # 完整性權重 30%
+        completeness_score = ((total - missing) / total) * 30 if total > 0 else 30
+        
+        # 一致性權重 30%
+        consistency_score = ((total - duplicates) / total) * 30 if total > 0 else 30
+        
+        return min(100, validity_score + completeness_score + consistency_score)
+    
+    def _get_grade(self, score: float) -> str:
+        """根據分數給出等級"""
+        if score >= 90:
+            return 'A'
+        elif score >= 80:
+            return 'B'
+        elif score >= 70:
+            return 'C'
+        elif score >= 60:
+            return 'D'
+        return 'F'
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """轉換為字典"""
+        return {
+            'timestamp': self.timestamp,
+            'metrics': asdict(self.metrics) if self.metrics else None
+        }
+    
+    def to_json(self) -> str:
+        """轉換為 JSON 字串"""
+        return json.dumps(self.to_dict(), indent=2, ensure_ascii=False)
     
     def generate_report(
         self,
