@@ -58,12 +58,13 @@ class OutlierDetector:
         
         z_scores = (values - mean) / std
         
+        # 建立 valid_data 索引映射（避免重複 price 造成混淆）
+        # valid_indices[i] = valid_data[i] 在原始 data 中的 index
+        valid_indices = [i for i, item in enumerate(data) if item.get(value_field) is not None]
+        
         # 標記異常值
         outlier_count = 0
         result = []
-        
-        # 創建索引映射
-        value_to_item = {item[value_field]: item for item in valid_data}
         
         for i, item in enumerate(data.copy()):
             value = item.get(value_field)
@@ -72,9 +73,10 @@ class OutlierDetector:
                 result.append(item)
                 continue
             
-            if value in value_to_item:
-                idx = list(value_to_item.keys()).index(value)
-                z = z_scores[idx]
+            # 查找此 item 在 valid_data 中的位置
+            try:
+                valid_data_idx = valid_indices.index(i)
+                z = z_scores[valid_data_idx]
                 
                 if abs(z) > threshold:
                     outlier_count += 1
@@ -86,7 +88,7 @@ class OutlierDetector:
                     logger.debug(f"Z-score outlier detected: value={value}, z={z:.4f}")
                 else:
                     result.append(item)
-            else:
+            except ValueError:
                 result.append(item)
         
         logger.info(f"Z-score detection found {outlier_count} outliers (threshold={threshold})")
