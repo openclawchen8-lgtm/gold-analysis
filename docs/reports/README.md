@@ -25,6 +25,29 @@ docs/reports/
 |------|------|------|------|
 | [T004 驗證](validation/T004_validated.md) | 2026-04-10 | T004 數據驗證與清洗 | ✅ 通過 |
 
+### 問題報告 (incidents/)
+| 報告 | 日期 | 問題 | 狀態 |
+|------|------|------|------|
+| [黃金價格解析錯誤](incidents/2026-04-10_gold_price_parsing_bug.md) | 2026-04-10 | 正則匹配錯誤 table | ✅ 已解決 |
+| [analysis_tools.py 拼寫錯誤](incidents/2026-04-09_analysis_tools_typo.md) | 2026-04-09 | 變量名錯誤 w→window | ✅ 已解決 |
+
+### 任務執行報告 (execution/)
+| 報告 | 日期 | 執行者 | 任務 | 狀態 |
+|------|------|--------|------|------|
+| [extend 第一波](execution/2026-04-10_coder1_extend.md) | 2026-04-10 | 碼農1號 | T001-T006 | ✅ 完成 |
+| [advanced 第一波](execution/2026-04-10_coder2_advanced.md) | 2026-04-10 | 碼農2號 | T001+T003 | 🔄 進行中 |
+| [platform 第一波](execution/2026-04-10_ann_platform.md) | 2026-04-10 | 安安 | T001+T002 | 🔄 進行中 |
+| [T004-A/B/C](execution/2026-04-10_coder1_T004-ABC.md) | 2026-04-10 | 碼農1號 | 驗證/清洗/報告 | ✅ 完成 |
+| [T004-D](execution/2026-04-10_coder2_T004-D.md) | 2026-04-10 | 碼農2號 | IQR 修復 | ✅ 完成 |
+| [T014 前端](execution/2026-04-09_ann_T014.md) | 2026-04-09 | 安安 | 核心頁面 | ✅ 完成 |
+| [T015 實時推送](execution/2026-04-09_coder2_T015.md) | 2026-04-09 | 碼農2號 | WebSocket | ✅ 完成 |
+
+### 決策記錄 (decisions/)
+| ADR | 日期 | 決策 | 狀態 |
+|-----|------|------|------|
+| [ADR-001](decisions/ADR-001_multi_project_architecture.md) | 2026-04-10 | 多專案架構設計 | ✅ 已接受 |
+| [ADR-002](decisions/ADR-002_team_config_unification.md) | 2026-04-10 | 團隊配置統一 | ✅ 已接受 |
+
 ### 任務執行報告 (execution/)
 | 報告 | 日期 | 執行者 | 任務 | 狀態 |
 |------|------|--------|------|------|
