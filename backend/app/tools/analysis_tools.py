@@ -345,12 +345,16 @@ class AnalysisTools:
         resistance_levels = []
         
         for i in range(window, len(data) - window):
-            # Check if local minimum (support)
-            if all(data[i] <= data[i-w:i] + data[i+1:i+window+1]):
+            # Check if local minimum (support): point <= all neighbors in window
+            left_ok = all(data[i] <= data[j] for j in range(i - window, i))
+            right_ok = all(data[i] <= data[j] for j in range(i + 1, i + window + 1))
+            if left_ok and right_ok:
                 support_levels.append(data[i])
-            
-            # Check if local maximum (resistance)
-            if all(data[i] >= data[i-w:i] + data[i+1:i+window+1]):
+
+            # Check if local maximum (resistance): point >= all neighbors in window
+            left_ok_r = all(data[i] >= data[j] for j in range(i - window, i))
+            right_ok_r = all(data[i] >= data[j] for j in range(i + 1, i + window + 1))
+            if left_ok_r and right_ok_r:
                 resistance_levels.append(data[i])
         
         # Cluster similar levels
