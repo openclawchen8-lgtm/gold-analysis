@@ -60,10 +60,12 @@ const Chart: React.FC = () => {
   // Draw candlestick chart
   useEffect(() => {
     if (!candlestickRef.current || data.length === 0) return;
+    const container = candlestickRef.current;
+    if (container.clientWidth === 0 || container.clientHeight === 0) return;
     if (chartRef.current) { chartRef.current.remove(); chartRef.current = null; }
 
-    const chart = createChart(candlestickRef.current, {
-      width: candlestickRef.current.clientWidth,
+    const chart = createChart(container, {
+      width: container.clientWidth,
       height: 380,
       layout: { background: { color: '#1e293b' }, textColor: '#9ca3af' },
       grid: { vertLines: { color: '#334155' }, horzLines: { color: '#334155' } },
