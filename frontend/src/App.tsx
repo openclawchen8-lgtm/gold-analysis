@@ -4,13 +4,20 @@
 import { Routes, Route } from 'react-router-dom';
 import { MainLayout } from '@components/layout';
 import Dashboard from '@components/pages/Dashboard';
+import Chart from '@components/pages/Chart';
+import Analysis from '@components/pages/Analysis';
+import History from '@components/pages/History';
+import Settings from '@components/pages/Settings';
 
 function App() {
   return (
     <MainLayout>
       <Routes>
         <Route path="/" element={<Dashboard />} />
-        {/* 其他頁面預留 */}
+        <Route path="/chart" element={<Chart />} />
+        <Route path="/analysis" element={<Analysis />} />
+        <Route path="/history" element={<History />} />
+        <Route path="/settings" element={<Settings />} />
       </Routes>
     </MainLayout>
   );
