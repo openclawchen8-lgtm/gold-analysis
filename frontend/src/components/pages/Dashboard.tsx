@@ -58,13 +58,13 @@ const Dashboard: React.FC = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-slate-800 rounded-lg p-4">
           <div className="text-gray-400 text-xs mb-1">台灣銀行賣出</div>
-          <div className="text-2xl font-bold text-white">${price?.sell ?? '--'}</div>
-          <div className="text-xs text-gray-500">USD/oz</div>
+          <div className="text-2xl font-bold text-white">{price?.sell ?? '--'}</div>
+          <div className="text-xs text-gray-500">NT/克</div>
         </div>
         <div className="bg-slate-800 rounded-lg p-4">
           <div className="text-gray-400 text-xs mb-1">台灣銀行買進</div>
-          <div className="text-2xl font-bold text-white">${price?.buy ?? '--'}</div>
-          <div className="text-xs text-gray-500">USD/oz</div>
+          <div className="text-2xl font-bold text-white">{price?.buy ?? '--'}</div>
+          <div className="text-xs text-gray-500">NT/克</div>
         </div>
         <div className="bg-slate-800 rounded-lg p-4">
           <div className="text-gray-400 text-xs mb-1">日內變動</div>
@@ -112,8 +112,8 @@ const Dashboard: React.FC = () => {
             const range = max - min || 1;
             const height = ((h.sell - min) / range) * 80 + 10;
             return (
-              <div key={i} className="flex-1 flex flex-col items-center gap-1" title={`${formatTs(h.timestamp)} $${h.sell}`}>
-                <div className="text-xs text-gray-400">${h.sell}</div>
+              <div key={i} className="flex-1 flex flex-col items-center gap-1" title={`${formatTs(h.timestamp)} ${h.sell}`}>
+                <div className="text-xs text-gray-400">{h.sell}</div>
                 <div className="w-full bg-blue-500 rounded-t" style={{ height: `${height}px` }} />
                 <div className="text-xs text-gray-600">{new Date(h.timestamp).toLocaleDateString('zh-TW', {month:'numeric',day:'numeric'})}</div>
               </div>

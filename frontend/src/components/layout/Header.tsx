@@ -17,12 +17,12 @@ export const Header: React.FC = () => {
         <div className="flex items-center gap-6">
           {/* 當前價格 */}
           <div className="flex items-center gap-2">
-            <span className="text-gray-400 text-sm">XAU/USD</span>
+            <span className="text-gray-400 text-sm">NT/克</span>
             <span className="text-2xl font-bold text-white">
               {isLoading ? (
                 <span className="animate-pulse">Loading...</span>
               ) : (
-                currentPrice > 0 ? `$${currentPrice.toFixed(2)}` : '--'
+                currentPrice > 0 ? `${currentPrice.toFixed(0)}` : '--'
               )}
             </span>
           </div>

@@ -6,8 +6,10 @@ import { NavLink } from 'react-router-dom';
 
 const navItems = [
   { path: '/', label: 'Dashboard', icon: '📊' },
+  { path: '/summary', label: 'Summary', icon: '📊' },
   { path: '/chart', label: 'Chart', icon: '📈' },
   { path: '/analysis', label: 'Analysis', icon: '🔍' },
+  { path: '/news', label: 'News', icon: '📰' },
   { path: '/history', label: 'History', icon: '📜' },
   { path: '/settings', label: 'Settings', icon: '⚙️' },
 ];

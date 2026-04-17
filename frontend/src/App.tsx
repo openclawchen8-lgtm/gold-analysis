@@ -6,7 +6,9 @@ import { MainLayout } from '@components/layout';
 import Dashboard from '@components/pages/Dashboard';
 import Chart from '@components/pages/Chart';
 import Analysis from '@components/pages/Analysis';
+import Summary from '@components/pages/Summary';
 import History from '@components/pages/History';
+import News from '@components/pages/News';
 import Settings from '@components/pages/Settings';
 
 function App() {
@@ -14,8 +16,10 @@ function App() {
     <MainLayout>
       <Routes>
         <Route path="/" element={<Dashboard />} />
+        <Route path="/summary" element={<Summary />} />
         <Route path="/chart" element={<Chart />} />
         <Route path="/analysis" element={<Analysis />} />
+        <Route path="/news" element={<News />} />
         <Route path="/history" element={<History />} />
         <Route path="/settings" element={<Settings />} />
       </Routes>

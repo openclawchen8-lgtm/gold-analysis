@@ -91,7 +91,7 @@ export const PriceChart: React.FC<PriceChartProps> = ({
   return (
     <div className="rounded-lg overflow-hidden bg-slate-800">
       <div className="p-4 border-b border-gray-700">
-        <h3 className="text-lg font-semibold text-white">Gold Price (XAU/USD)</h3>
+        <h3 className="text-lg font-semibold text-white">黃金價格（NT/克）</h3>
       </div>
       <div ref={chartContainerRef} className="w-full" />
     </div>

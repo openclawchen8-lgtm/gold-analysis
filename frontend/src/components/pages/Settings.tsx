@@ -11,8 +11,8 @@ interface AlertConfig {
 
 const Settings: React.FC = () => {
   const [alerts, setAlerts] = useState<AlertConfig>({
-    priceAbove: 5000,
-    priceBelow: 4500,
+    priceAbove: 9500,
+    priceBelow: 8500,
     enabled: true,
   });
   const [saved, setSaved] = useState(false);
@@ -64,9 +64,9 @@ const Settings: React.FC = () => {
                   className="flex-1 bg-slate-700 text-white rounded px-3 py-2 disabled:opacity-50"
                   placeholder="5000"
                 />
-                <span className="text-gray-400">USD/oz</span>
+                <span className="text-gray-400">NT/克</span>
               </div>
-              <div className="text-xs text-gray-500 mt-1">目前市價 ${4891}（建議高於 {4891 + 100}+ 設定）</div>
+              <div className="text-xs text-gray-500 mt-1">目前台銀賣出價約 9000+（建議高於此設定）</div>
             </div>
 
             <div>
@@ -80,11 +80,11 @@ const Settings: React.FC = () => {
                   onChange={(e) => setAlerts(a => ({ ...a, priceBelow: Number(e.target.value) }))}
                   disabled={!alerts.enabled}
                   className="flex-1 bg-slate-700 text-white rounded px-3 py-2 disabled:opacity-50"
-                  placeholder="4500"
+                  placeholder="8000"
                 />
-                <span className="text-gray-400">USD/oz</span>
+                <span className="text-gray-400">NT/克</span>
               </div>
-              <div className="text-xs text-gray-500 mt-1">目前市價 ${4891}（建議低於 {4891 - 100}- 設定）</div>
+              <div className="text-xs text-gray-500 mt-1">目前台銀賣出價約 9000+（建議低於此設定）</div>
             </div>
           </div>
         </div>
