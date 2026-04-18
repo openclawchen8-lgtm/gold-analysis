@@ -92,21 +92,35 @@ class TechnicalAnalysisAgent(GoldAnalysisAgent):
             ohlc_df = None
             logger.warning("無 OHLC DataFrame，形態識別跳過")
 
-        if len(closes) < 60:
+        if len(closes) < 8:
             return {
                 "symbol": symbol,
-                "error": "數據不足，至少需要 60 根 K 線",
+                "error": "數據不足，至少需要 8 根 K 線",
                 "risk_level": "unknown",
-                "recommendation": "等待更多數據",
+                "recommendation": "等待更多數據（目前 10 筆，gold_monitor 每日增加）",
             }
 
-        # ── 各項指標計算 ──────────────────────────────────────────────────
-
-        rsi_vals = self.rsi.compute(closes)
-        macd_line, signal_line, histogram = self.macd.compute(closes)
-        upper, middle, lower, percent_b, bandwidth = self.bollinger.compute(closes)
-        ma_short_vals = self.ma_short.compute(closes)
-        ma_long_vals = self.ma_long.compute(closes)
+        # ── 各項指標計算（動態週期：小樣本專用）─────────────────────────────
+        n = len(closes)
+        # RSI：固定 14，但 n<14 時用可用資料
+        rsi_period = min(14, max(7, n - 5))
+        rsi = RSI(period=rsi_period)
+        rsi_vals = rsi.compute(closes)
+        # MACD：n 不足時縮短參數
+        fast_p = min(12, max(5, n // 2))
+        slow_p = min(26, max(fast_p + 1, n - 3))
+        sig_p  = min(9, max(3, n // 4))
+        macd = MACD(fast_period=fast_p, slow_period=slow_p, signal_period=sig_p)
+        macd_line, signal_line, histogram = macd.compute(closes)
+        # Bollinger：週期 min(20, n-2)
+        bb_period = min(20, max(5, n - 2))
+        bb = BollingerBands(period=bb_period, std_mult=2.0)
+        upper, middle, lower, percent_b, bandwidth = bb.compute(closes)
+        # MA：短=min(20,n-2)，長=min(60,n-5)，至少差 3
+        ma_s = min(20, max(3, n - 3))
+        ma_l = min(60, max(ma_s + 3, n - 2))
+        ma_short_vals = SMA(period=ma_s).compute(closes)
+        ma_long_vals  = SMA(period=ma_l).compute(closes)
 
         # 當前值
         rsi_current = float(rsi_vals[-1]) if not np.isnan(rsi_vals[-1]) else None

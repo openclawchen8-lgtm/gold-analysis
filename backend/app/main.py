@@ -201,24 +201,29 @@ async def get_technicals(symbol: str = "TAIFEX-TGF1", timeframe: str = "1D"):
     """
     技術分析：整合 RSI/MACD/MA/Bollinger/Patterns
     timeframe: 1m, 5m, 15m, 1H, 4H, 1D
+    資料來源：~/.qclaw/gold_price_history.json（台灣銀行每日收盤價）
     """
+    import pathlib, json
     from .agents.technical_analysis import TechnicalAnalysisAgent
 
-    # 從 SQLite 取最近歷史價格（拿夠 60 根）
-    conn = _get_db()
-    try:
-        rows = conn.execute(
-            "SELECT local_sell FROM price_history "
-            "WHERE metal='gold' ORDER BY timestamp DESC LIMIT 200"
-        ).fetchall()
-    finally:
-        conn.close()
+    # 從本地 history JSON 讀取（gold_monitor 維護的每日收盤價）
+    path = pathlib.Path.home() / ".qclaw" / "gold_price_history.json"
+    if not path.exists():
+        return {"error": "歷史資料檔案不存在，請確認 gold_monitor 已執行", "available": 0}
 
-    if len(rows) < 60:
-        return {"error": "數據不足", "available": len(rows), "required": 60}
+    data = json.load(open(path))
+    daily = data.get("daily", {})
+    if not daily:
+        return {"error": "無歷史資料", "available": 0}
 
-    # 轉成 closes（由新到舊 → 由舊到新）
-    closes = [float(r["local_sell"]) for r in reversed(rows)]
+    # 依日期排序（舊→新）
+    sorted_dates = sorted(daily.keys())
+    closes = [float(daily[d]["sell"]) for d in sorted_dates if daily[d].get("sell", 0) > 0]
+
+    MIN_DAYS = 5
+    if len(closes) < MIN_DAYS:
+        return {"error": f"數據不足（歷史累積中）", "available": len(closes), "required": MIN_DAYS,
+                "note": "gold_monitor 每日執行後資料會自動增加，請稍後再試"}
 
     # 呼叫 TechnicalAnalysisAgent
     agent = TechnicalAnalysisAgent()
@@ -227,6 +232,84 @@ async def get_technicals(symbol: str = "TAIFEX-TGF1", timeframe: str = "1D"):
         "symbol": symbol,
         "timeframe": timeframe,
     })
+
+    # 加入資料說明
+    result["_meta"] = {
+        "data_days": len(closes),
+        "date_range": f"{sorted_dates[0]} ~ {sorted_dates[-1]}",
+        "data_source": "台灣銀行黃金存折每日收盤價",
+        "note": f"共 {len(closes)} 個交易日，{MIN_DAYS}+ 筆即可產出指標",
+    }
+    # ── 轉換為前端格式 ───────────────────────────────────────────────────────
+    rsi_val = result.get("indicators", {}).get("rsi")
+    macd_val = result.get("indicators", {}).get("macd")
+    macd_sig_val = result.get("indicators", {}).get("macd_signal")
+
+    def _rsi_signal(v):
+        if v is None: return "hold"
+        if v > 75: return "sell"
+        if v > 65: return "hold"
+        if v < 25: return "buy"
+        if v < 35: return "hold"
+        return "hold"
+
+    def _price_signal(current, upper, lower, mid):
+        if current > upper: return "sell"
+        if current < lower: return "buy"
+        if current > mid: return "hold"
+        return "hold"
+
+    bb = result.get("indicators", {}).get("bollinger", {})
+    ma = result.get("indicators", {}).get("ma", {})
+    close = closes[-1] if closes else None
+
+    result["indicators"] = {
+        "rsi": {
+            "name": "RSI", "value": rsi_val,
+            "signal": _rsi_signal(rsi_val),
+            "description": f"RSI {rsi_val:.1f}" if rsi_val else "無資料",
+        },
+        "macd": {
+            "name": "MACD", "value": macd_val,
+            "signal": "buy" if (macd_val or 0) > (macd_sig_val or 0) else "sell",
+            "description": f"MACD {macd_val:.2f} / Signal {macd_sig_val:.2f}" if macd_val and macd_sig_val else "無資料",
+        },
+        "bollinger": {
+            "name": "布林通道", "value": bb.get("percent_b"),
+            "signal": _price_signal(close, bb.get("upper"), bb.get("lower"), bb.get("middle")),
+            "description": f"B% {bb.get('percent_b',0):.0%} | 上下軌 {bb.get('upper',0):.0f}/{bb.get('lower',0):.0f}",
+        },
+        "ma_short": {
+            "name": "MA短期", "value": ma.get("ma20") or ma.get("ma_short"),
+            "signal": "hold", "description": "短期均線",
+        },
+        "ma_long": {
+            "name": "MA長期", "value": ma.get("ma60") or ma.get("ma_long"),
+            "signal": "hold", "description": "長期均線",
+        },
+    }
+
+    # 轉換 signals 格式
+    raw_signals = result.pop("signals", [])
+    result["signals"] = [
+        {
+            "type": s.get("type", ""),
+            "action": s.get("action", "hold"),
+            "label": s.get("description", ""),
+            "strength": 1.0,
+        }
+        for s in raw_signals
+    ]
+
+    # 轉換 support_resistance
+    raw_sr = result.pop("support_resistance", [])
+    result["support_resistance"] = [
+        {"type": sr.get("type"), "price": sr.get("level")}
+        for sr in raw_sr
+    ]
+
+    result["trend_score"] = result.get("trend_score") or 0
+
 
     return result
 
