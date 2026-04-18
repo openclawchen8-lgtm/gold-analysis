@@ -16,3 +16,5 @@ redis>=5.0.0
 # OpenClaw Agent Framework
 openclaw>=0.1.0
 pyyaml>=6.0
+scipy>=1.11.0
+websockets>=12.0
