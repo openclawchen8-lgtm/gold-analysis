@@ -8,6 +8,7 @@ import Chart from '@components/pages/Chart';
 import Analysis from '@components/pages/Analysis';
 import Summary from '@components/pages/Summary';
 import TechnicalsPage from '@components/pages/TechnicalsPage';
+import ForwardCurvePage from '@components/pages/ForwardCurvePage';
 import News from '@components/pages/News';
 import History from '@components/pages/History';
 import Settings from '@components/pages/Settings';
@@ -21,6 +22,7 @@ function App() {
         <Route path="/chart" element={<Chart />} />
         <Route path="/analysis" element={<Analysis />} />
         <Route path="/technicals" element={<TechnicalsPage />} />
+        <Route path="/forward-curve" element={<ForwardCurvePage />} />
         <Route path="/history" element={<History />} />
         <Route path="/settings" element={<Settings />} />
       </Routes>

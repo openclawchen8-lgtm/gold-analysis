@@ -10,6 +10,7 @@ const navItems = [
   { path: '/chart', label: 'Chart', icon: '📈' },
   { path: '/analysis', label: 'Analysis', icon: '🔍' },
   { path: '/technicals', label: '技術分析', icon: '📊' },
+  { path: '/forward-curve', label: '遠期曲線', icon: '📈' },
   { path: '/news', label: 'News', icon: '📰' },
   { path: '/history', label: 'History', icon: '📜' },
   { path: '/settings', label: 'Settings', icon: '⚙️' },

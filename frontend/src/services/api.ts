@@ -98,3 +98,4 @@ export const fetchTechnicals = async (
   );
   return resp.data;
 };
+export { api };

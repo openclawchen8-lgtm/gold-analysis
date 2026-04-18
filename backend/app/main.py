@@ -229,3 +229,16 @@ async def get_technicals(symbol: str = "TAIFEX-TGF1", timeframe: str = "1D"):
     })
 
     return result
+
+
+# ── Forward Curve API ─────────────────────────────────────────────────────────
+
+from app.routers.forward_curve import get_forward_curve_data, ContractPoint, ForwardCurveResponse
+
+@app.get("/api/forward-curve", response_model=ForwardCurveResponse)
+async def forward_curve():
+    """
+    遠期曲線 API
+    回傳黃金期貨各月合約價格結構（Contango / Backwardation 分析）
+    """
+    return await get_forward_curve_data()
