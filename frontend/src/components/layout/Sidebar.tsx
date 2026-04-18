@@ -9,6 +9,7 @@ const navItems = [
   { path: '/summary', label: '市場概要', icon: '📊' },
   { path: '/chart', label: '走勢圖', icon: '📈' },
   { path: '/analysis', label: '市場分析', icon: '🔍' },
+  { path: '/decision', label: '決策詳情', icon: '🎯' },
   { path: '/technicals', label: '技術分析', icon: '📊' },
   { path: '/forward-curve', label: '遠期曲線', icon: '📈' },
   { path: '/seasonality', label: '季節性', icon: '🗓️' },

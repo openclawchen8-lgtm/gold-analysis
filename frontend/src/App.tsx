@@ -8,6 +8,7 @@ import Chart from '@components/pages/Chart';
 import Analysis from '@components/pages/Analysis';
 import Summary from '@components/pages/Summary';
 import TechnicalsPage from '@components/pages/TechnicalsPage';
+import DecisionDetail from '@components/pages/DecisionDetail';
 import ForwardCurvePage from '@components/pages/ForwardCurvePage';
 import SeasonalityPage from '@components/pages/SeasonalityPage';
 import ContractsPage from '@components/pages/ContractsPage';
@@ -24,6 +25,7 @@ function App() {
         <Route path="/chart" element={<Chart />} />
         <Route path="/analysis" element={<Analysis />} />
         <Route path="/technicals" element={<TechnicalsPage />} />
+        <Route path="/decision" element={<DecisionDetail />} />
         <Route path="/forward-curve" element={<ForwardCurvePage />} />
         <Route path="/seasonality" element={<SeasonalityPage />} />
         <Route path="/contracts" element={<ContractsPage />} />
