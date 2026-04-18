@@ -209,7 +209,7 @@ const TechnicalsPage: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-white">技術分析</h1>
-          <p className="text-sm text-gray-400 mt-0.5">RSI · MACD · MA · Bollinger Bands</p>
+          <p className="text-sm text-gray-400 mt-0.5">60 天歷史 · 完整技術指標 · 訊號列表 · 支撐阻力位</p>
         </div>
         {/* Timeframe selector */}
         <div className="flex gap-1 bg-slate-800 rounded-lg p-1 border border-slate-700">
