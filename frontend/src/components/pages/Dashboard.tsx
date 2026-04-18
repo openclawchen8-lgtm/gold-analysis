@@ -50,7 +50,18 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 p-4">
+    <div className="space-y-6 p-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-white">🥇 黃金分析系統</h1>
+          <p className="text-sm text-gray-400 mt-0.5">台銀黃金存折 · 即時報價 · AI 決策建議</p>
+        </div>
+        <button onClick={loadData} className="px-3 py-1.5 bg-yellow-500 hover:bg-yellow-400 text-slate-900 rounded-lg text-sm font-medium transition-colors">
+          🔄 重新整理
+        </button>
+      </div>
+
       {loading && <div className="text-gray-400 text-sm">載入中...</div>}
       {error && <div className="bg-red-900/30 text-red-400 p-3 rounded">⚠️ {error}</div>}
 
@@ -94,10 +105,6 @@ const Dashboard: React.FC = () => {
           <div className="text-sm text-gray-300 space-y-1">
             {decision.reason.map((r, i) => <div key={i}>• {r}</div>)}
           </div>
-          <button
-            onClick={loadData}
-            className="mt-3 px-3 py-1 text-xs bg-slate-700 hover:bg-slate-600 rounded transition"
-          >🔄 重新整理</button>
         </div>
       )}
 

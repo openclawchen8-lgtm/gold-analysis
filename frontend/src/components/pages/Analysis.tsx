@@ -105,8 +105,8 @@ const Analysis: React.FC = () => {
     <div className="space-y-6 p-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white">🔍 技術分析</h2>
-          <p className="text-gray-400 text-sm">RSI · MA · 趨勢判斷</p>
+          <h1 className="text-xl font-bold text-white">🔍 市場分析</h1>
+          <p className="text-gray-400 text-sm mt-0.5">台銀報價 · AI 決策建議 · MA 趨勢 · RSI 超買超賣</p>
         </div>
         <button onClick={load} className="px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded text-sm">🔄 重新整理</button>
       </div>

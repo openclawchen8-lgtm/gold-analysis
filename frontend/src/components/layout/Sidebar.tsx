@@ -5,17 +5,17 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 
 const navItems = [
-  { path: '/', label: 'Dashboard', icon: '📊' },
-  { path: '/summary', label: 'Summary', icon: '📊' },
-  { path: '/chart', label: 'Chart', icon: '📈' },
-  { path: '/analysis', label: 'Analysis', icon: '🔍' },
+  { path: '/', label: '🥇 黃金分析', icon: '' },
+  { path: '/summary', label: '市場概要', icon: '📊' },
+  { path: '/chart', label: '走勢圖', icon: '📈' },
+  { path: '/analysis', label: '市場分析', icon: '🔍' },
   { path: '/technicals', label: '技術分析', icon: '📊' },
   { path: '/forward-curve', label: '遠期曲線', icon: '📈' },
   { path: '/seasonality', label: '季節性', icon: '🗓️' },
-  { path: '/contracts', label: '合約', icon: '📄' },
-  { path: '/news', label: 'News', icon: '📰' },
-  { path: '/history', label: 'History', icon: '📜' },
-  { path: '/settings', label: 'Settings', icon: '⚙️' },
+  { path: '/contracts', label: '合約資訊', icon: '📄' },
+  { path: '/news', label: '市場新聞', icon: '📰' },
+  { path: '/history', label: '歷史報價', icon: '📜' },
+  { path: '/settings', label: '系統設定', icon: '⚙️' },
 ];
 
 export const Sidebar: React.FC = () => {
@@ -23,7 +23,7 @@ export const Sidebar: React.FC = () => {
     <aside className="w-64 bg-slate-800 border-r border-gray-700 min-h-screen">
       <div className="p-4">
         <div className="text-yellow-500 text-2xl mb-2">🥇</div>
-        <div className="text-white font-semibold">Gold Analysis</div>
+        <div className="text-white font-semibold">黃金分析系統</div>
       </div>
       
       <nav className="mt-4">

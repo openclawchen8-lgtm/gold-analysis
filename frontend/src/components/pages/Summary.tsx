@@ -100,8 +100,8 @@ const Summary: React.FC = () => {
     <div className="space-y-6 p-4 bg-slate-800 text-white min-h-screen">
       {/* 頁首 */}
       <div>
-        <h2 className="text-2xl font-bold text-white">📊 概要</h2>
-        <p className="text-gray-400 text-sm">黃金市場概覽</p>
+        <h1 className="text-xl font-bold text-white">📊 市場概要</h1>
+        <p className="text-gray-400 text-sm mt-0.5">黃金現貨報價 · 日內波動 · 市場概覽</p>
       </div>
 
       {loading && <div className="text-gray-400 text-sm animate-pulse">載入中...</div>}
