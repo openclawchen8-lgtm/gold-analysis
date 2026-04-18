@@ -12,6 +12,7 @@ const navItems = [
   { path: '/technicals', label: '技術分析', icon: '📊' },
   { path: '/forward-curve', label: '遠期曲線', icon: '📈' },
   { path: '/seasonality', label: '季節性', icon: '🗓️' },
+  { path: '/contracts', label: '合約', icon: '📄' },
   { path: '/news', label: 'News', icon: '📰' },
   { path: '/history', label: 'History', icon: '📜' },
   { path: '/settings', label: 'Settings', icon: '⚙️' },

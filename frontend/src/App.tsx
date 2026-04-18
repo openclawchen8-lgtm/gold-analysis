@@ -10,6 +10,7 @@ import Summary from '@components/pages/Summary';
 import TechnicalsPage from '@components/pages/TechnicalsPage';
 import ForwardCurvePage from '@components/pages/ForwardCurvePage';
 import SeasonalityPage from '@components/pages/SeasonalityPage';
+import ContractsPage from '@components/pages/ContractsPage';
 import News from '@components/pages/News';
 import History from '@components/pages/History';
 import Settings from '@components/pages/Settings';
@@ -25,6 +26,7 @@ function App() {
         <Route path="/technicals" element={<TechnicalsPage />} />
         <Route path="/forward-curve" element={<ForwardCurvePage />} />
         <Route path="/seasonality" element={<SeasonalityPage />} />
+        <Route path="/contracts" element={<ContractsPage />} />
         <Route path="/history" element={<History />} />
         <Route path="/settings" element={<Settings />} />
       </Routes>

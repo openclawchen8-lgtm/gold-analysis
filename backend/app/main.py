@@ -233,8 +233,7 @@ async def get_technicals(symbol: str = "TAIFEX-TGF1", timeframe: str = "1D"):
 
 # ── Forward Curve API ─────────────────────────────────────────────────────────
 
-from app.routers.forward_curve import get_forward_curve_data, ContractPoint, ForwardCurveResponse
-from app.routers.seasonality import get_seasonality
+from app.routers.forward_curve import get_forward_curve_data, ForwardCurveResponse
 
 @app.get("/api/forward-curve", response_model=ForwardCurveResponse)
 async def forward_curve():
@@ -341,3 +340,83 @@ async def seasonality():
         "fetched_at": now.strftime("%Y/%m/%d %H:%M"),
     }
 
+
+# ────────────────────────────────────────────────────────────────
+# 合約資訊 API (T007)
+# 資料來源：TAIFEX 台灣期貨交易所
+# ────────────────────────────────────────────────────────────────
+
+@app.get("/api/contracts")
+async def get_contracts():
+    """期貨合約資訊：合約規格 + 月份合約列表"""
+    now = datetime.now()
+
+    # ── 靜態合約規格 ─────────────────────────────────────────────
+    specs = {
+        "symbol": "TGF1",
+        "full_name": "台灣黃金期貨",
+        "exchange": "TAIFEX 台灣期貨交易所",
+        "multiplier": "100 盎司 (oz)",
+        "tick_size": "1 元/盎司",
+        "tick_value": "100 元/口",
+        "trading_session": "一般時段 08:45–13:45 / 盤後交易 15:00–次日 05:00",
+        "settlement": "現金結算",
+        "last_trading_day": "每月倒數第 2 個營業日",
+        "delivery_months": "逐月續報，最多 12 個月份",
+        "margin": "原始保證金 約 NT$ 55,000 / 口（依交易所公告）",
+        "price_limit": "前一交易日結算價 ± 10%",
+        "daily_settlement": "每日結算",
+    }
+
+    # ── 月份合約列表 ─────────────────────────────────────────────
+    # TAIFEX 黃金期貨：每月一個合約，商品代碼 TGF1
+    # 近月合約 = 當月 + 接下來 5 個月份（GC! 慣例）
+    def _next_n_months(n: int):
+        """取得最近 n 個未到期的月份合約"""
+        contracts = []
+        d = datetime(now.year, now.month, 1)
+        while len(contracts) < n:
+            month = d.month
+            year = d.year
+            # 月份代碼：F G H J K M N Q U V X Z
+            codes = {1:"F",2:"G",3:"H",4:"J",5:"K",6:"M",
+                     7:"N",8:"Q",9:"U",10:"V",11:"X",12:"Z"}
+            code = codes[month]
+            # 到期日：每月倒數第 2 個營業日，約在每月 25 日左右
+            # 粗估：每月 25 日（若為假日前移）
+            last_trading = _estimate_last_trading_day(year, month)
+            contracts.append({
+                "delivery_month": f"{year}-{month:02d}",
+                "delivery_label": f"{year}年{month}月 ({_zh_month(month)})",
+                "contract_code": f"TGF1{code}{str(year)[2:]}",
+                "last_trading_date": last_trading,
+                "is_near": len(contracts) == 0,
+                "months_ahead": len(contracts),
+            })
+            # 下一個月
+            d = datetime(year if month < 12 else year + 1,
+                         (month % 12) + 1, 1)
+        return contracts
+
+    def _estimate_last_trading_day(year: int, month: int) -> str:
+        """估算：每月 25 日，若為週末/假日往前推至最近營業日"""
+        import calendar
+        # 每月 25 日
+        day = 25
+        d = datetime(year, month, day)
+        # 往前推到非週末
+        while d.weekday() >= 5:  # 5=Sat, 6=Sun
+            d = d - timedelta(days=1)
+        return d.strftime("%Y-%m-%d")
+
+    def _zh_month(m: int) -> str:
+        return ["一","二","三","四","五","六",
+                "七","八","九","十","十一","十二"][m-1] + "月"
+
+    months = _next_n_months(6)
+
+    return {
+        "specs": specs,
+        "contracts": months,
+        "fetched_at": now.strftime("%Y/%m/%d %H:%M"),
+    }
