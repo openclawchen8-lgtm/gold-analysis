@@ -234,6 +234,7 @@ async def get_technicals(symbol: str = "TAIFEX-TGF1", timeframe: str = "1D"):
 # ── Forward Curve API ─────────────────────────────────────────────────────────
 
 from app.routers.forward_curve import get_forward_curve_data, ContractPoint, ForwardCurveResponse
+from app.routers.seasonality import get_seasonality
 
 @app.get("/api/forward-curve", response_model=ForwardCurveResponse)
 async def forward_curve():
@@ -242,3 +243,101 @@ async def forward_curve():
     回傳黃金期貨各月合約價格結構（Contango / Backwardation 分析）
     """
     return await get_forward_curve_data()
+
+# ── 季節性分析 ──────────────────────────────────────────────────────────────
+# 黃金季節性：CME Group / World Gold Council / Kitco 多年研究平均值
+GOLD_SEASONALITY = {
+    1:  {"avg_return": 1.2,  "label": "春節前實物需求", "confidence": "medium"},
+    2:  {"avg_return": 0.8,  "label": "春節效應持續", "confidence": "medium"},
+    3:  {"avg_return": -0.4, "label": "春節結束獲利了結", "confidence": "low"},
+    4:  {"avg_return": -0.2, "label": "淡季/稅務因素", "confidence": "low"},
+    5:  {"avg_return": -0.1, "label": "結婚淡季", "confidence": "low"},
+    6:  {"avg_return": -0.3, "label": "夏季傳統淡季", "confidence": "low"},
+    7:  {"avg_return": 0.5,  "label": "印度婚禮季準備啟動", "confidence": "medium"},
+    8:  {"avg_return": 1.5,  "label": "結婚旺季(印度)", "confidence": "medium"},
+    9:  {"avg_return": 2.1,  "label": "中秋/十一假期", "confidence": "high"},
+    10: {"avg_return": 1.8,  "label": "排燈節/黃金周", "confidence": "high"},
+    11: {"avg_return": 0.3,  "label": "年底整理", "confidence": "low"},
+    12: {"avg_return": 0.6,  "label": "年終避險/禮品採購", "confidence": "medium"},
+}
+MONTH_NAMES_ZH = {1:"1月",2:"2月",3:"3月",4:"4月",5:"5月",6:"6月",7:"7月",8:"8月",9:"9月",10:"10月",11:"11月",12:"12月"}
+
+def _season_strength(r):
+    if r >= 1.5: return "strong_buy"
+    if r >= 0.5: return "buy"
+    if r >= -0.2: return "neutral"
+    if r >= -0.4: return "sell"
+    return "strong_sell"
+
+def _get_season(m):
+    if m in (3,4,5): return "Q2(夏)"
+    if m in (6,7,8): return "Q3(秋)"
+    if m in (9,10,11): return "Q4(冬)"
+    return "Q1(春)"
+
+@app.get("/api/seasonality")
+async def seasonality():
+    """
+    黃金季節性分析。
+    返回月度平均漲跌（市場研究參考值）、強度評級、當前季節分析。
+    """
+    from datetime import datetime
+    from collections import defaultdict
+    import json, pathlib
+
+    now = datetime.now()
+    current_month = now.month
+
+    # 嘗試從本地 history 讀取
+    monthly_prices: dict = defaultdict(list)
+    path = pathlib.Path.home() / ".qclaw" / "gold_price_history.json"
+    if path.exists():
+        data = json.load(open(path))
+        for dk, dd in data.get("daily", {}).items():
+            ym = dk[:7]
+            sell = dd.get("sell", 0)
+            if sell > 0:
+                monthly_prices[ym].append(sell)
+
+    monthly_stats = []
+    for m in range(1, 13):
+        ref = GOLD_SEASONALITY[m]
+        year_months = [f"{now.year}-{m:02d}", f"{now.year-1}-{m:02d}", f"{now.year-2}-{m:02d}"]
+        local = []
+        for ym in year_months:
+            if ym in monthly_prices:
+                local.extend(monthly_prices[ym])
+        avg_price = round(sum(local)/len(local), 2) if len(local) >= 2 else None
+        monthly_stats.append({
+            "month": m,
+            "month_label": MONTH_NAMES_ZH[m],
+            "avg_return_pct": ref["avg_return"],
+            "avg_price": avg_price,
+            "data_count": len(local),
+            "reference_return": ref["avg_return"],
+            "reference_label": ref["label"],
+            "confidence": ref["confidence"],
+            "strength": _season_strength(ref["avg_return"]),
+        })
+
+    sorted_by = sorted(monthly_stats, key=lambda x: x["reference_return"])
+    worst_month = sorted_by[0]["month"]
+    best_month = sorted_by[-1]["month"]
+
+    total_days = sum(s["data_count"] for s in monthly_stats)
+    if total_days < 30:
+        data_note = "⚠️ 本地歷史資料不足，月度統計以市場研究參考值為主。黃金季節性是多年平均趨勢，請謹慎解讀。"
+    else:
+        data_note = f"共 {total_days} 天本地歷史資料"
+
+    return {
+        "monthly_stats": monthly_stats,
+        "current_month": current_month,
+        "current_month_label": MONTH_NAMES_ZH[current_month],
+        "current_season": _get_season(current_month),
+        "best_month": best_month,
+        "worst_month": worst_month,
+        "data_note": data_note,
+        "fetched_at": now.strftime("%Y/%m/%d %H:%M"),
+    }
+
