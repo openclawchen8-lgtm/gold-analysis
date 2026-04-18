@@ -1,8 +1,10 @@
 /**
- * Analysis 頁面 - 技術分析 + 基本面資訊
+ * Analysis 頁面 - 市場分析（AI 決策雷達）
+ * 資料來源：/api/prices/current（台銀報價）+ /api/historical-prices（60天歷史）
+ * + /api/technicals（AI recommendation）
  */
 import React, { useEffect, useState } from 'react';
-import { fetchDecision, fetchCurrentPrice, fetchHistory } from '@services/api';
+import { fetchCurrentPrice, fetchTechnicals, fetchHistory } from '@services/api';
 
 interface IndicatorCardProps {
   title: string;
@@ -30,8 +32,13 @@ const IndicatorCard: React.FC<IndicatorCardProps> = ({ title, value, sub, color,
 
 const Analysis: React.FC = () => {
   const [price, setPrice] = useState<{ sell: number; buy: number; change: number; change_pct: number } | null>(null);
-  const [decision, setDecision] = useState<{ action: string; confidence: number; signal: string; reason: string[]; price: number } | null>(null);
-  const [history, setHistory] = useState<Array<{ timestamp: string; sell: number }>>([]);
+  const [technicals, setTechnicals] = useState<{
+    recommendation: string;
+    trend_score: number;
+    risk_level: string;
+    signals: Array<{ type: string; action: string; label: string }>;
+  } | null>(null);
+  const [history, setHistory] = useState<Array<{ timestamp: string; sell: number; buy: number }>>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,14 +46,14 @@ const Analysis: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const [priceData, decisionData, histData] = await Promise.all([
+      const [priceData, techData, histData] = await Promise.all([
         fetchCurrentPrice(),
-        fetchDecision(),
-        fetchHistory(7),
+        fetchTechnicals(),
+        fetchHistory(60), // 60天歷史支撐 MA20/MA60
       ]);
       setPrice(priceData);
-      setDecision(decisionData);
-      setHistory(histData.data);
+      setTechnicals(techData);
+      setHistory(histData.data ?? []);
     } catch (e: any) {
       setError(e?.message ?? '載入失敗');
     } finally {
@@ -114,24 +121,42 @@ const Analysis: React.FC = () => {
       {loading && <div className="text-gray-400 text-center py-8 animate-pulse">分析中...</div>}
       {error && <div className="bg-red-900/30 text-red-400 p-3 rounded">⚠️ {error}</div>}
 
-      {/* Decision */}
-      {decision && (
-        <div className={`rounded-lg p-4 border ${decision.action === 'buy' ? 'bg-green-900/20 border-green-700' : decision.action === 'sell' ? 'bg-red-900/20 border-red-700' : 'bg-yellow-900/20 border-yellow-700'}`}>
+      {/* Decision / Technicals recommendation */}
+      {technicals && (
+        <div className={`rounded-lg p-4 border ${
+          technicals.recommendation.toLowerCase().includes('buy') ? 'bg-green-900/20 border-green-700' :
+          technicals.recommendation.toLowerCase().includes('sell') ? 'bg-red-900/20 border-red-700' :
+          'bg-yellow-900/20 border-yellow-700'
+        }`}>
           <div className="flex items-center gap-3">
-            <span className="text-3xl">{decision.action === 'buy' ? '💰' : decision.action === 'sell' ? '⚠️' : '➡️'}</span>
+            <span className="text-3xl">{
+              technicals.recommendation.toLowerCase().includes('buy') ? '💰' :
+              technicals.recommendation.toLowerCase().includes('sell') ? '⚠️' : '➡️'
+            }</span>
             <div>
-              <div className={`text-2xl font-bold ${decision.action === 'buy' ? 'text-green-400' : decision.action === 'sell' ? 'text-red-400' : 'text-yellow-400'}`}>
-                {decision.signal}
+              <div className={`text-xl font-bold ${
+                technicals.recommendation.toLowerCase().includes('buy') ? 'text-green-400' :
+                technicals.recommendation.toLowerCase().includes('sell') ? 'text-red-400' : 'text-yellow-400'
+              }`}>
+                {technicals.recommendation}
               </div>
-              <div className="text-sm text-gray-400">信心度 {Math.round(decision.confidence * 100)}%</div>
-            </div>
-            <div className="ml-auto text-right text-sm text-gray-400">
-              參考價 ${decision.price}
+              <div className="text-sm text-gray-400">
+                趨勢分數 {technicals.trend_score}/100 · 風險等級 {technicals.risk_level}
+              </div>
             </div>
           </div>
-          <div className="mt-2 text-sm text-gray-300 space-y-1">
-            {decision.reason.map((r, i) => <div key={i}>• {r}</div>)}
-          </div>
+          {technicals.signals.length > 0 && (
+            <div className="mt-2 text-sm text-gray-300 space-y-1">
+              {technicals.signals.slice(0, 4).map((s, i) => (
+                <div key={i}>
+                  <span className={s.action === 'buy' ? 'text-green-400' : s.action === 'sell' ? 'text-red-400' : 'text-yellow-400'}>
+                    {s.action === 'buy' ? '▲' : s.action === 'sell' ? '▼' : '─'}
+                  </span>{' '}
+                  {s.label}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -183,14 +208,19 @@ const Analysis: React.FC = () => {
       </div>
 
       {/* Reasons breakdown */}
-      {decision && (
+      {technicals && technicals.signals.length > 0 && (
         <div className="bg-slate-800 rounded-lg p-4">
-          <h3 className="text-white font-semibold mb-3">🧠 AI 分析理由</h3>
+          <h3 className="text-white font-semibold mb-3">🧠 AI 訊號分析</h3>
           <ul className="space-y-2">
-            {decision.reason.map((r, i) => (
+            {technicals.signals.map((s, i) => (
               <li key={i} className="flex items-start gap-2 text-sm text-gray-300">
-                <span className="text-yellow-500 mt-0.5">▸</span>
-                {r}
+                <span className={`mt-0.5 ${
+                  s.action === 'buy' ? 'text-green-400' : s.action === 'sell' ? 'text-red-400' : 'text-yellow-400'
+                }`}>▸</span>
+                <span className={s.action === 'buy' ? 'text-green-300' : s.action === 'sell' ? 'text-red-300' : 'text-yellow-300'}>
+                  [{s.action.toUpperCase()}]
+                </span>{' '}
+                {s.label}
               </li>
             ))}
           </ul>
