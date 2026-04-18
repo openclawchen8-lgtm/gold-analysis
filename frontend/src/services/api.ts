@@ -54,3 +54,47 @@ export const fetchDecision = async (): Promise<DecisionResponse> => {
   const resp = await api.get<DecisionResponse>('/api/decisions/recommend');
   return resp.data;
 };
+
+// ── 技術分析 API ─────────────────────────────────────────────────────────────
+
+export interface TechnicalIndicator {
+  name: string;
+  value: number | null;
+  signal: 'buy' | 'sell' | 'hold';
+  description: string;
+}
+
+export interface TechnicalSignal {
+  type: string;
+  action: 'buy' | 'sell' | 'hold';
+  label: string;
+  strength: number;
+}
+
+export interface TechnicalsResponse {
+  symbol: string;
+  timeframe: string;
+  indicators: {
+    rsi: TechnicalIndicator;
+    macd: TechnicalIndicator;
+    bollinger: TechnicalIndicator;
+    ma_short: TechnicalIndicator;
+    ma_long: TechnicalIndicator;
+  };
+  signals: TechnicalSignal[];
+  trend_score: number;
+  risk_level: 'low' | 'medium' | 'high';
+  recommendation: string;
+  support_resistance: Array<{ type: 'support' | 'resistance'; price: number }>;
+  error?: string;
+}
+
+export const fetchTechnicals = async (
+  symbol = 'TAIFEX-TGF1',
+  timeframe = '1D'
+): Promise<TechnicalsResponse> => {
+  const resp = await api.get<TechnicalsResponse>(
+    `/api/technicals?symbol=${encodeURIComponent(symbol)}&timeframe=${encodeURIComponent(timeframe)}`
+  );
+  return resp.data;
+};

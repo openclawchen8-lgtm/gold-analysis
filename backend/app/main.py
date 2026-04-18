@@ -192,3 +192,40 @@ async def health_check():
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+
+
+# ── Technical Analysis API ─────────────────────────────────────────────────
+
+@app.get("/api/technicals")
+async def get_technicals(symbol: str = "TAIFEX-TGF1", timeframe: str = "1D"):
+    """
+    技術分析：整合 RSI/MACD/MA/Bollinger/Patterns
+    timeframe: 1m, 5m, 15m, 1H, 4H, 1D
+    """
+    from .agents.technical_analysis import TechnicalAnalysisAgent
+
+    # 從 SQLite 取最近歷史價格（拿夠 60 根）
+    conn = _get_db()
+    try:
+        rows = conn.execute(
+            "SELECT local_sell FROM price_history "
+            "WHERE metal='gold' ORDER BY timestamp DESC LIMIT 200"
+        ).fetchall()
+    finally:
+        conn.close()
+
+    if len(rows) < 60:
+        return {"error": "數據不足", "available": len(rows), "required": 60}
+
+    # 轉成 closes（由新到舊 → 由舊到新）
+    closes = [float(r["local_sell"]) for r in reversed(rows)]
+
+    # 呼叫 TechnicalAnalysisAgent
+    agent = TechnicalAnalysisAgent()
+    result = await agent.analyze({
+        "prices": closes,
+        "symbol": symbol,
+        "timeframe": timeframe,
+    })
+
+    return result

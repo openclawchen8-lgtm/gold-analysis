@@ -9,6 +9,7 @@ const navItems = [
   { path: '/summary', label: 'Summary', icon: '📊' },
   { path: '/chart', label: 'Chart', icon: '📈' },
   { path: '/analysis', label: 'Analysis', icon: '🔍' },
+  { path: '/technicals', label: '技術分析', icon: '📊' },
   { path: '/news', label: 'News', icon: '📰' },
   { path: '/history', label: 'History', icon: '📜' },
   { path: '/settings', label: 'Settings', icon: '⚙️' },
